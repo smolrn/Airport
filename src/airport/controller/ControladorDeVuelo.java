@@ -21,10 +21,10 @@ public class ControladorDeVuelo {
     }
 
     public JSONObject registrarVuelo(String id, String idAvion,
-                                     String idSalida, String idLlegada, String idEscala,
-                                     LocalDateTime fechaSalida,
-                                     int horasDuracion, int minutosDuracion,
-                                     int horasEscala, int minutosEscala) {
+            String idSalida, String idLlegada, String idEscala,
+            LocalDateTime fechaSalida,
+            int horasDuracion, int minutosDuracion,
+            int horasEscala, int minutosEscala) {
 
         JSONObject r = new JSONObject();
 
@@ -36,26 +36,23 @@ public class ControladorDeVuelo {
             return error("El ID del vuelo ya existe.");
         }
 
-   
         Plane avion = buscarAvion(idAvion);
         if (avion == null) {
-            return error("El avión especificado no existe.");
+            return error("El avion especificado no existe.");
         }
 
         Location salida = buscarLocalizacion(idSalida);
         Location llegada = buscarLocalizacion(idLlegada);
-        Location escala = idEscala.equals("Location") ? null : buscarLocalizacion(idEscala); 
+        Location escala = idEscala.equals("Location") ? null : buscarLocalizacion(idEscala);
 
         if (salida == null || llegada == null) {
-            return error("Las localizaciones de salida y llegada deben ser válidas.");
+            return error("Las localizaciones de salida y llegada deben ser validas.");
         }
 
-     
         if (fechaSalida == null) {
             return error("La fecha de salida es inválida.");
         }
 
-  
         int totalMinutos = (horasDuracion * 60) + minutosDuracion;
         if (totalMinutos <= 0) {
             return error("La duración del vuelo debe ser mayor que 00:00.");
@@ -72,21 +69,27 @@ public class ControladorDeVuelo {
 
     private boolean existeId(String id) {
         for (Flight f : vuelos) {
-            if (f.getId().equalsIgnoreCase(id)) return true;
+            if (f.getId().equalsIgnoreCase(id)) {
+                return true;
+            }
         }
         return false;
     }
 
     private Plane buscarAvion(String id) {
         for (Plane p : aviones) {
-            if (p.getId().equalsIgnoreCase(id)) return p;
+            if (p.getId().equalsIgnoreCase(id)) {
+                return p;
+            }
         }
         return null;
     }
 
     private Location buscarLocalizacion(String id) {
         for (Location l : localizaciones) {
-            if (l.getAirportId().equalsIgnoreCase(id)) return l;
+            if (l.getAirportId().equalsIgnoreCase(id)) {
+                return l;
+            }
         }
         return null;
     }

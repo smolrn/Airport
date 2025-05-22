@@ -5,13 +5,33 @@
 package airport;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author edangulo
  */
 public class Plane {
+    private List<Observador> observadores = new ArrayList<>();  
+
+   
+    public void agregarObservador(Observador observador) {
+        this.observadores.add(observador);
+    }
+
     
+    public void notificarObservadores() {
+        for (Observador observador : observadores) {
+            observador.actualizar();  
+        }
+    }
+
+   
+    public void agregarAvion(Plane avion) {
+       
+        this.notificarObservadores();  
+    }
+
     private final String id;
     private String brand;
     private String model;

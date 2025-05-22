@@ -18,27 +18,27 @@ public class ControladorDePasajero {
         JSONObject respuesta = new JSONObject();
 
         if (id < 0 || String.valueOf(id).length() > 15 || existeId(id)) {
-            return error("El ID debe ser único, mayor o igual a 0 y tener máximo 15 dígitos.");
+            return error("El ID debe ser unico, mayor o igual a 0 y tener maximo 15 dígitos.");
         }
 
         if (codigo < 0 || String.valueOf(codigo).length() > 3) {
-            return error("El código telefónico debe tener máximo 3 dígitos.");
+            return error("El codigo telefonico debe tener máximo 3 dígitos.");
         }
 
         if (telefono < 0 || String.valueOf(telefono).length() > 11) {
-            return error("El teléfono debe tener máximo 11 dígitos.");
+            return error("El telefono debe tener maximo 11 dígitos.");
         }
 
-        if (nombre == null || nombre.trim().isEmpty() ||
-            apellido == null || apellido.trim().isEmpty() ||
-            pais == null || pais.trim().isEmpty()) {
-            return error("Los campos no pueden estar vacíos.");
+        if (nombre == null || nombre.trim().isEmpty()
+                || apellido == null || apellido.trim().isEmpty()
+                || pais == null || pais.trim().isEmpty()) {
+            return error("Los campos no pueden estar vacios.");
         }
 
         try {
             LocalDate.parse(fechaNacimiento);
         } catch (Exception e) {
-            return error("Fecha de nacimiento inválida.");
+            return error("Fecha de nacimiento invalida.");
         }
 
         respuesta.put("estado", "exito");
@@ -48,7 +48,9 @@ public class ControladorDePasajero {
 
     private boolean existeId(long id) {
         for (Passenger p : pasajeros) {
-            if (p.getId() == id) return true;
+            if (p.getId() == id) {
+                return true;
+            }
         }
         return false;
     }

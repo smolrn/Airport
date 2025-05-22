@@ -4,6 +4,7 @@
  */
 package airport;
 
+import airport.controller.ControladorDeActualizacionDePasajero;
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.Color;
 import java.time.LocalDate;
@@ -16,6 +17,8 @@ import airport.controller.ControladorDeAvion;
 import org.json.JSONObject;
 import airport.controller.ControladorDeLocalizacion;
 import airport.controller.ControladorDeVuelo;
+import airport.controller.ControladorParaAddToFlight;
+import airport.controller.ControladorParaDelayFlight;
 import org.json.JSONObject;
 import java.time.LocalDateTime;
 import org.json.JSONArray;
@@ -25,12 +28,360 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.time.LocalDate;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+public class AirportFrame extends javax.swing.JFrame implements Observador {
 
+    @Override
+    public void actualizar() {
 
-public class AirportFrame extends javax.swing.JFrame {
+        actualizarTablas();
+    }
 
-    
+    private void cargarPasajerosDesdeArchivo() {
+        try {
+            File archivo = new File("pasajeros.json");
+            if (!archivo.exists()) {
+                return;
+            }
+
+            BufferedReader br = new BufferedReader(new FileReader(archivo));
+            StringBuilder sb = new StringBuilder();
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                sb.append(linea);
+            }
+            br.close();
+
+            JSONArray arreglo = new JSONArray(sb.toString());
+            for (int i = 0; i < arreglo.length(); i++) {
+                JSONObject obj = arreglo.getJSONObject(i);
+                long id = obj.getLong("id");
+                String firstname = obj.getString("firstname");
+                String lastname = obj.getString("lastname");
+                String birthdate = obj.getString("birthdate");
+                int phoneCode = obj.getInt("phoneCode");
+                long phone = obj.getLong("phone");
+                String country = obj.getString("country");
+
+                // Asegúrate de que el formato de la fecha de nacimiento coincida con el formato esperado
+                Passenger pasajero = new Passenger(id, firstname, lastname, LocalDate.parse(birthdate), phoneCode, phone, country);
+                this.passengers.add(pasajero);
+                this.userSelect.addItem(String.valueOf(id));
+            }
+
+            actualizarTablas();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void actualizarTablas() {
+
+        DefaultTableModel modelAviones = (DefaultTableModel) jTable4.getModel();
+        modelAviones.setRowCount(0);
+        for (Plane p : this.planes) {
+            modelAviones.addRow(new Object[]{p.getId(), p.getBrand(), p.getModel(), p.getMaxCapacity(), p.getAirline(), p.getNumFlights()});
+        }
+
+        DefaultTableModel modelVuelos = (DefaultTableModel) jTable3.getModel();
+        modelVuelos.setRowCount(0);
+        for (Flight f : this.flights) {
+            modelVuelos.addRow(new Object[]{
+                f.getId(),
+                f.getDepartureLocation().getAirportId(),
+                f.getArrivalLocation().getAirportId(),
+                (f.getScaleLocation() == null ? "-" : f.getScaleLocation().getAirportId()),
+                f.getDepartureDate(),
+                f.calculateArrivalDate(),
+                f.getPlane().getId(),
+                f.getNumPassengers()
+            });
+        }
+
+        DefaultTableModel modelPasajeros = (DefaultTableModel) jTable2.getModel();
+        modelPasajeros.setRowCount(0);
+        for (Passenger p : this.passengers) {
+            modelPasajeros.addRow(new Object[]{
+                p.getId(),
+                p.getFullname(),
+                p.getBirthDate(),
+                p.calculateAge(),
+                p.generateFullPhone(),
+                p.getCountry(),
+                p.getNumFlights()
+            });
+        }
+    }
+
+    private void actualizarBloqueoPestanas(String tipoUsuario) {
+
+        int totalPestanas = jTabbedPane1.getTabCount();
+
+        for (int i = 0; i < totalPestanas; i++) {
+
+            if (i == 0) {
+                jTabbedPane1.setEnabledAt(i, true);
+                continue;
+            }
+
+            if ("Administrador".equalsIgnoreCase(tipoUsuario)) {
+
+                if (i == 5 || i == 6 || i == 7) {
+                    jTabbedPane1.setEnabledAt(i, false);
+                } else {
+                    jTabbedPane1.setEnabledAt(i, true);
+                }
+            } else if ("Usuario".equalsIgnoreCase(tipoUsuario)) {
+
+                if (i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                    jTabbedPane1.setEnabledAt(i, true);
+                } else {
+                    jTabbedPane1.setEnabledAt(i, false);
+                }
+            } else {
+
+                jTabbedPane1.setEnabledAt(i, false);
+            }
+        }
+    }
+
+    private void cargarAvionesDesdeArchivo() {
+        try {
+            File archivo = new File("aviones.json");
+            if (!archivo.exists()) {
+                return;
+            }
+
+            BufferedReader br = new BufferedReader(new FileReader(archivo));
+            StringBuilder sb = new StringBuilder();
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                sb.append(linea);
+            }
+            br.close();
+
+            JSONArray arreglo = new JSONArray(sb.toString());
+            for (int i = 0; i < arreglo.length(); i++) {
+                JSONObject obj = arreglo.getJSONObject(i);
+                String id = obj.getString("id");
+                String marca = obj.getString("brand");
+                String modelo = obj.getString("model");
+                int capacidadMax = obj.getInt("maxCapacity");
+                String aerolinea = obj.getString("airline");
+
+                Plane p = new Plane(id, marca, modelo, capacidadMax, aerolinea);
+                this.planes.add(p);
+                this.jComboBox1.addItem(id);
+            }
+
+            actualizarTablas();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardarAvionesEnArchivo() {
+        try {
+            JSONArray arreglo = new JSONArray();
+            for (Plane p : this.planes) {
+                JSONObject obj = new JSONObject();
+                obj.put("id", p.getId());
+                obj.put("brand", p.getBrand());
+                obj.put("model", p.getModel());
+                obj.put("maxCapacity", p.getMaxCapacity());
+                obj.put("airline", p.getAirline());
+                arreglo.put(obj);
+            }
+
+            FileWriter writer = new FileWriter("aviones.json");
+            writer.write(arreglo.toString(4));
+            writer.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarLocalizacionesDesdeArchivo() {
+        try {
+            File archivo = new File("localizaciones.json");
+            if (!archivo.exists()) {
+                return;
+            }
+
+            BufferedReader br = new BufferedReader(new FileReader(archivo));
+            StringBuilder sb = new StringBuilder();
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                sb.append(linea);
+            }
+            br.close();
+
+            JSONArray arreglo = new JSONArray(sb.toString());
+            for (int i = 0; i < arreglo.length(); i++) {
+                JSONObject obj = arreglo.getJSONObject(i);
+                String id = obj.getString("id");
+                String nombre = obj.getString("name");
+                String ciudad = obj.getString("city");
+                String pais = obj.getString("country");
+                double latitud = obj.getDouble("latitude");
+                double longitud = obj.getDouble("longitude");
+
+                Location loc = new Location(id, nombre, ciudad, pais, latitud, longitud);
+                this.locations.add(loc);
+                this.jComboBox2.addItem(id);
+                this.jComboBox3.addItem(id);
+                this.jComboBox4.addItem(id);
+            }
+
+            actualizarTablas();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardarLocalizacionesEnArchivo() {
+        try {
+            JSONArray arreglo = new JSONArray();
+            for (Location loc : this.locations) {
+                JSONObject obj = new JSONObject();
+                obj.put("id", loc.getAirportId());
+                obj.put("name", loc.getAirportName());
+                obj.put("city", loc.getAirportCity());
+                obj.put("country", loc.getAirportCountry());
+                obj.put("latitude", loc.getAirportLatitude());
+                obj.put("longitude", loc.getAirportLongitude());
+                arreglo.put(obj);
+            }
+
+            FileWriter writer = new FileWriter("localizaciones.json");
+            writer.write(arreglo.toString(4));
+            writer.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarVuelosDesdeArchivo() {
+        try {
+            File archivo = new File("vuelos.json");
+            if (!archivo.exists()) {
+                return;
+            }
+
+            BufferedReader br = new BufferedReader(new FileReader(archivo));
+            StringBuilder sb = new StringBuilder();
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                sb.append(linea);
+            }
+            br.close();
+
+            JSONArray arreglo = new JSONArray(sb.toString());
+            for (int i = 0; i < arreglo.length(); i++) {
+                JSONObject obj = arreglo.getJSONObject(i);
+
+                String id = obj.getString("id");
+                String planeId = obj.getString("planeId");
+                String departureId = obj.getString("departureId");
+                String arrivalId = obj.getString("arrivalId");
+                String scaleId = obj.optString("scaleId", null); // Puede ser null
+                String departureDateStr = obj.getString("departureDate");
+
+                int hoursDurArrival = obj.getInt("hoursDurArrival");
+                int minutesDurArrival = obj.getInt("minutesDurArrival");
+                int hoursDurScale = obj.optInt("hoursDurScale", 0);
+                int minutesDurScale = obj.optInt("minutesDurScale", 0);
+
+                Plane plane = null;
+                Location departure = null;
+                Location arrival = null;
+                Location scale = null;
+
+                for (Plane p : this.planes) {
+                    if (p.getId().equalsIgnoreCase(planeId)) {
+                        plane = p;
+                        break;
+                    }
+                }
+
+                for (Location loc : this.locations) {
+                    if (loc.getAirportId().equalsIgnoreCase(departureId)) {
+                        departure = loc;
+                    }
+                    if (loc.getAirportId().equalsIgnoreCase(arrivalId)) {
+                        arrival = loc;
+                    }
+                    if (scaleId != null && loc.getAirportId().equalsIgnoreCase(scaleId)) {
+                        scale = loc;
+                    }
+                }
+
+                LocalDateTime departureDate = LocalDateTime.parse(departureDateStr);
+
+                Flight vuelo;
+
+                if (scale == null) {
+                    vuelo = new Flight(id, plane, departure, arrival, departureDate, hoursDurArrival, minutesDurArrival);
+                } else {
+                    vuelo = new Flight(id, plane, departure, scale, arrival, departureDate, hoursDurArrival, minutesDurArrival, hoursDurScale, minutesDurScale);
+                }
+
+                this.flights.add(vuelo);
+                this.jComboBox5.addItem(id);
+                this.jComboBox7.addItem(id);
+            }
+
+            actualizarTablas();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardarVuelosEnArchivo() {
+        try {
+            JSONArray arreglo = new JSONArray();
+            for (Flight vuelo : this.flights) {
+                JSONObject obj = new JSONObject();
+                obj.put("id", vuelo.getId());
+                obj.put("planeId", vuelo.getPlane().getId());
+                obj.put("departureId", vuelo.getDepartureLocation().getAirportId());
+                obj.put("arrivalId", vuelo.getArrivalLocation().getAirportId());
+                obj.put("scaleId", vuelo.getScaleLocation() != null ? vuelo.getScaleLocation().getAirportId() : JSONObject.NULL);
+                obj.put("departureDate", vuelo.getDepartureDate().toString());
+                obj.put("hoursDurArrival", vuelo.getHoursDurationArrival());
+                obj.put("minutesDurArrival", vuelo.getMinutesDurationArrival());
+                obj.put("hoursDurScale", vuelo.getHoursDurationScale());
+                obj.put("minutesDurScale", vuelo.getMinutesDurationScale());
+
+                arreglo.put(obj);
+            }
+
+            FileWriter writer = new FileWriter("vuelos.json");
+            writer.write(arreglo.toString(4));
+            writer.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private int x, y;
     private ArrayList<Passenger> passengers;
     private ArrayList<Plane> planes;
@@ -39,7 +390,18 @@ public class AirportFrame extends javax.swing.JFrame {
 
     public AirportFrame() {
         initComponents();
+        this.planes = new ArrayList<>();
+        this.locations = new ArrayList<>();
+        this.passengers = new ArrayList<>();
+        this.flights = new ArrayList<>();
 
+        this.cargarAvionesDesdeArchivo();
+        this.cargarLocalizacionesDesdeArchivo();
+        this.cargarVuelosDesdeArchivo();
+        this.cargarVuelosDesdeArchivo();
+        this.cargarAvionesDesdeArchivo();
+        this.cargarLocalizacionesDesdeArchivo();
+        this.cargarPasajerosDesdeArchivo();
         this.passengers = new ArrayList<>();
         this.planes = new ArrayList<>();
         this.locations = new ArrayList<>();
@@ -1415,290 +1777,290 @@ public class AirportFrame extends javax.swing.JFrame {
         if (user.isSelected()) {
             user.setSelected(false);
             userSelect.setSelectedIndex(0);
-
         }
-        for (int i = 1; i < jTabbedPane1.getTabCount(); i++) {
-                jTabbedPane1.setEnabledAt(i, true);
-        }
-        jTabbedPane1.setEnabledAt(5, false);
-        jTabbedPane1.setEnabledAt(6, false);
+        actualizarBloqueoPestanas("Administrador");
     }//GEN-LAST:event_administratorActionPerformed
 
     private void userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userActionPerformed
         if (administrator.isSelected()) {
             administrator.setSelected(false);
         }
-        for (int i = 1; i < jTabbedPane1.getTabCount(); i++) {
-
-            jTabbedPane1.setEnabledAt(i, false);
-
-        }
-        jTabbedPane1.setEnabledAt(9, true);
-        jTabbedPane1.setEnabledAt(5, true);
-        jTabbedPane1.setEnabledAt(6, true);
-        jTabbedPane1.setEnabledAt(7, true);
-        jTabbedPane1.setEnabledAt(11, true);
+        actualizarBloqueoPestanas("Usuario");
     }//GEN-LAST:event_userActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
         try {
-        // Leer los datos del formulario
-        long id = Long.parseLong(jTextField2.getText());
-        String firstname = jTextField7.getText();
-        String lastname = jTextField6.getText();
-        int year = Integer.parseInt(jTextField3.getText());
-        int month = Integer.parseInt(MONTH.getSelectedItem().toString());
-        int day = Integer.parseInt(DAY.getSelectedItem().toString());
-        int phoneCode = Integer.parseInt(jTextField1.getText());
-        long phone = Long.parseLong(jTextField5.getText());
-        String country = jTextField4.getText();
+            // Leer los datos del formulario
+            long id = Long.parseLong(jTextField2.getText());
+            String firstname = jTextField7.getText();
+            String lastname = jTextField6.getText();
+            int year = Integer.parseInt(jTextField3.getText());
+            int month = Integer.parseInt(MONTH.getSelectedItem().toString());
+            int day = Integer.parseInt(DAY.getSelectedItem().toString());
+            int phoneCode = Integer.parseInt(jTextField1.getText());
+            long phone = Long.parseLong(jTextField5.getText());
+            String country = jTextField4.getText();
 
-       String fechaNacimiento = year + "-" + String.format("%02d", month) + "-" + String.format("%02d", day);
+            String fechaNacimiento = year + "-" + String.format("%02d", month) + "-" + String.format("%02d", day);
 
-        
-        airport.controller.ControladorDePasajero controlador = new airport.controller.ControladorDePasajero(this.passengers);
-        org.json.JSONObject respuesta = controlador.registrarPasajero(id, firstname, lastname, fechaNacimiento, phoneCode, phone, country);
+            airport.controller.ControladorDePasajero controlador = new airport.controller.ControladorDePasajero(this.passengers);
+            org.json.JSONObject respuesta = controlador.registrarPasajero(id, firstname, lastname, fechaNacimiento, phoneCode, phone, country);
 
-        if (respuesta.getString("estado").equals("exito")) {
-           
-            java.time.LocalDate birthDate = java.time.LocalDate.of(year, month, day);
-            Passenger nuevo = new Passenger(id, firstname, lastname, birthDate, phoneCode, phone, country);
-            this.passengers.add(nuevo);
-            this.userSelect.addItem("" + id);
+            if (respuesta.getString("estado").equals("exito")) {
 
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                java.time.LocalDate birthDate = java.time.LocalDate.of(year, month, day);
+                Passenger nuevo = new Passenger(id, firstname, lastname, birthDate, phoneCode, phone, country);
+                this.passengers.add(nuevo);
+                this.userSelect.addItem("" + id);
+
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-    } catch (Exception ex) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    }
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-      try {
-        String id = jTextField8.getText().trim();       // ID del avión
-        String brand = jTextField9.getText().trim();    // Marca
-        String model = jTextField10.getText().trim();   // Modelo
-        int maxCapacity = Integer.parseInt(jTextField11.getText().trim());
-        String airline = jTextField12.getText().trim(); // Aerolínea
+        try {
+            String id = jTextField8.getText().trim();
+            String brand = jTextField9.getText().trim();
+            String model = jTextField10.getText().trim();
+            int maxCapacity = Integer.parseInt(jTextField11.getText().trim());
+            String airline = jTextField12.getText().trim(); // Aerolínea
 
-        ControladorDeAvion controlador = new ControladorDeAvion(this.planes);
-        JSONObject respuesta = controlador.registrarAvion(id, brand, model, maxCapacity, airline);
+            ControladorDeAvion controlador = new ControladorDeAvion(this.planes);
+            JSONObject respuesta = controlador.registrarAvion(id, brand, model, maxCapacity, airline);
 
-        if (respuesta.getString("estado").equals("exito")) {
-          
-            Plane avion = new Plane(id, brand, model, maxCapacity, airline);
-            this.planes.add(avion);
-            this.jComboBox1.addItem(id); 
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+            if (respuesta.getString("estado").equals("exito")) {
 
-            //(BONO BONO BONO)
-            jTextField8.setText("");
-            jTextField9.setText("");
-            jTextField10.setText("");
-            jTextField11.setText("");
-            jTextField12.setText("");
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                Plane avion = new Plane(id, brand, model, maxCapacity, airline);
+                this.planes.add(avion);
+                this.jComboBox1.addItem(id);
+
+                this.guardarAvionesEnArchivo();
+
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+
+                jTextField8.setText("");
+                jTextField9.setText("");
+                jTextField10.setText("");
+                jTextField11.setText("");
+                jTextField12.setText("");
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-    } catch (Exception ex) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    }   
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
         try {
-        String id = jTextField13.getText().trim();        
-        String name = jTextField14.getText().trim();     
-        String city = jTextField15.getText().trim();      
-        String country = jTextField16.getText().trim();   
-        double latitude = Double.parseDouble(jTextField17.getText().trim());
-        double longitude = Double.parseDouble(jTextField18.getText().trim());
+            String id = jTextField13.getText().trim();
+            String name = jTextField14.getText().trim();
+            String city = jTextField15.getText().trim();
+            String country = jTextField16.getText().trim();
+            double latitude = Double.parseDouble(jTextField17.getText().trim());
+            double longitude = Double.parseDouble(jTextField18.getText().trim());
 
-        
-        ControladorDeLocalizacion controlador = new ControladorDeLocalizacion(this.locations);
-        JSONObject respuesta = controlador.registrarLocalizacion(id, name, city, country, latitude, longitude);
+            ControladorDeLocalizacion controlador = new ControladorDeLocalizacion(this.locations);
+            JSONObject respuesta = controlador.registrarLocalizacion(id, name, city, country, latitude, longitude);
 
-        if (respuesta.getString("estado").equals("exito")) {
-            Location nueva = new Location(id, name, city, country, latitude, longitude);
-            this.locations.add(nueva);
+            if (respuesta.getString("estado").equals("exito")) {
+                Location nueva = new Location(id, name, city, country, latitude, longitude);
+                this.locations.add(nueva);
 
-           
-            this.jComboBox2.addItem(id); 
-            this.jComboBox3.addItem(id); 
-            this.jComboBox4.addItem(id); 
+                this.jComboBox2.addItem(id);
+                this.jComboBox3.addItem(id);
+                this.jComboBox4.addItem(id);
 
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+                this.guardarLocalizacionesEnArchivo();
 
-           
-            jTextField13.setText("");
-            jTextField14.setText("");
-            jTextField15.setText("");
-            jTextField16.setText("");
-            jTextField17.setText("");
-            jTextField18.setText("");
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+
+                // Limpiar campos
+                jTextField13.setText("");
+                jTextField14.setText("");
+                jTextField15.setText("");
+                jTextField16.setText("");
+                jTextField17.setText("");
+                jTextField18.setText("");
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-    } catch (Exception ex) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    }
     }//GEN-LAST:event_jButton10ActionPerformed
 
     private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
-       try {
-        String id = jTextField19.getText().trim();
-        String planeId = jComboBox1.getSelectedItem().toString();
-        String departureId = jComboBox2.getSelectedItem().toString();
-        String arrivalId = jComboBox3.getSelectedItem().toString();
-        String scaleId = jComboBox4.getSelectedItem().toString();
+        try {
+            String id = jTextField19.getText().trim();
+            String planeId = jComboBox1.getSelectedItem().toString();
+            String departureId = jComboBox2.getSelectedItem().toString();
+            String arrivalId = jComboBox3.getSelectedItem().toString();
+            String scaleId = jComboBox4.getSelectedItem().toString();
 
-        int year = Integer.parseInt(jTextField21.getText().trim());
-        int month = Integer.parseInt(MONTH1.getSelectedItem().toString());
-        int day = Integer.parseInt(DAY1.getSelectedItem().toString());
-        int hour = Integer.parseInt(MONTH2.getSelectedItem().toString());
-        int minute = Integer.parseInt(DAY2.getSelectedItem().toString());
+            int year = Integer.parseInt(jTextField21.getText().trim());
+            int month = Integer.parseInt(MONTH1.getSelectedItem().toString());
+            int day = Integer.parseInt(DAY1.getSelectedItem().toString());
+            int hour = Integer.parseInt(MONTH2.getSelectedItem().toString());
+            int minute = Integer.parseInt(DAY2.getSelectedItem().toString());
 
-        int durHour = Integer.parseInt(MONTH3.getSelectedItem().toString());
-        int durMin = Integer.parseInt(DAY3.getSelectedItem().toString());
+            int durHour = Integer.parseInt(MONTH3.getSelectedItem().toString());
+            int durMin = Integer.parseInt(DAY3.getSelectedItem().toString());
 
-        int scaleHour = Integer.parseInt(MONTH4.getSelectedItem().toString());
-        int scaleMin = Integer.parseInt(DAY4.getSelectedItem().toString());
+            int scaleHour = Integer.parseInt(MONTH4.getSelectedItem().toString());
+            int scaleMin = Integer.parseInt(DAY4.getSelectedItem().toString());
 
-        LocalDateTime departureDate = LocalDateTime.of(year, month, day, hour, minute);
+            LocalDateTime departureDate = LocalDateTime.of(year, month, day, hour, minute);
 
-       
-        ControladorDeVuelo controlador = new ControladorDeVuelo(this.flights, this.planes, this.locations);
-        JSONObject respuesta = controlador.registrarVuelo(
-            id, planeId,
-            departureId, arrivalId, scaleId,
-            departureDate,
-            durHour, durMin,
-            scaleHour, scaleMin
-        );
+            ControladorDeVuelo controlador = new ControladorDeVuelo(this.flights, this.planes, this.locations);
+            JSONObject respuesta = controlador.registrarVuelo(
+                    id, planeId,
+                    departureId, arrivalId, scaleId,
+                    departureDate,
+                    durHour, durMin,
+                    scaleHour, scaleMin
+            );
 
-        if (respuesta.getString("estado").equals("exito")) {
-          
-            Plane plane = null;
-            Location departure = null, arrival = null, scale = null;
+            if (respuesta.getString("estado").equals("exito")) {
 
-            for (Plane p : planes) {
-                if (p.getId().equalsIgnoreCase(planeId)) plane = p;
-            }
-            for (Location loc : locations) {
-                if (loc.getAirportId().equalsIgnoreCase(departureId)) departure = loc;
-                if (loc.getAirportId().equalsIgnoreCase(arrivalId)) arrival = loc;
-                if (loc.getAirportId().equalsIgnoreCase(scaleId)) scale = loc;
-            }
+                Plane plane = null;
+                Location departure = null, arrival = null, scale = null;
 
-            
-            Flight nuevo;
-            if (scaleId.equals("Location")) {
-                nuevo = new Flight(id, plane, departure, arrival, departureDate, durHour, durMin);
+                for (Plane p : planes) {
+                    if (p.getId().equalsIgnoreCase(planeId)) {
+                        plane = p;
+                    }
+                }
+                for (Location loc : locations) {
+                    if (loc.getAirportId().equalsIgnoreCase(departureId)) {
+                        departure = loc;
+                    }
+                    if (loc.getAirportId().equalsIgnoreCase(arrivalId)) {
+                        arrival = loc;
+                    }
+                    if (loc.getAirportId().equalsIgnoreCase(scaleId)) {
+                        scale = loc;
+                    }
+                }
+
+                Flight nuevo;
+                if (scaleId.equals("Location")) {
+                    nuevo = new Flight(id, plane, departure, arrival, departureDate, durHour, durMin);
+                } else {
+                    nuevo = new Flight(id, plane, departure, scale, arrival, departureDate, durHour, durMin, scaleHour, scaleMin);
+                }
+
+                flights.add(nuevo);
+                jComboBox5.addItem(id);
+                jComboBox7.addItem(id);
+                this.guardarVuelosEnArchivo();
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+
+                jTextField19.setText("");
+                jTextField21.setText("");
+                jComboBox1.setSelectedIndex(0);
+                jComboBox2.setSelectedIndex(0);
+                jComboBox3.setSelectedIndex(0);
+                jComboBox4.setSelectedIndex(0);
+                MONTH1.setSelectedIndex(0);
+                DAY1.setSelectedIndex(0);
+                MONTH2.setSelectedIndex(0);
+                DAY2.setSelectedIndex(0);
+                MONTH3.setSelectedIndex(0);
+                DAY3.setSelectedIndex(0);
+                MONTH4.setSelectedIndex(0);
+                DAY4.setSelectedIndex(0);
+
             } else {
-                nuevo = new Flight(id, plane, departure, scale, arrival, departureDate, durHour, durMin, scaleHour, scaleMin);
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
 
-            flights.add(nuevo);
-            jComboBox5.addItem(id);
-            jComboBox7.addItem(id);
-
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
-
-            jTextField19.setText("");
-            jTextField21.setText("");
-            jComboBox1.setSelectedIndex(0);
-            jComboBox2.setSelectedIndex(0);
-            jComboBox3.setSelectedIndex(0);
-            jComboBox4.setSelectedIndex(0);
-            MONTH1.setSelectedIndex(0);
-            DAY1.setSelectedIndex(0);
-            MONTH2.setSelectedIndex(0);
-            DAY2.setSelectedIndex(0);
-            MONTH3.setSelectedIndex(0);
-            DAY3.setSelectedIndex(0);
-            MONTH4.setSelectedIndex(0);
-            DAY4.setSelectedIndex(0);
-
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-    } catch (Exception ex) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    }
     }//GEN-LAST:event_jButton11ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-        long id = Long.parseLong(jTextField20.getText());
-        String firstname = jTextField22.getText();
-        String lastname = jTextField23.getText();
-        int year = Integer.parseInt(jTextField24.getText());
-        int month = Integer.parseInt(MONTH.getItemAt(MONTH5.getSelectedIndex()));
-        int day = Integer.parseInt(DAY.getItemAt(DAY5.getSelectedIndex()));
-        int phoneCode = Integer.parseInt(jTextField26.getText());
-        long phone = Long.parseLong(jTextField25.getText());
-        String country = jTextField27.getText();
+        try {
+            long id = Long.parseLong(jTextField20.getText().trim());
+            String firstname = jTextField22.getText().trim();
+            String lastname = jTextField23.getText().trim();
+            String fecha = jTextField24.getText().trim();
+            int month = Integer.parseInt(MONTH5.getSelectedItem().toString());
+            int day = Integer.parseInt(DAY5.getSelectedItem().toString());
+            String fechaNacimiento = fecha + "-" + month + "-" + day;
 
-        LocalDate birthDate = LocalDate.of(year, month, day);
+            int phoneCode = Integer.parseInt(jTextField26.getText().trim());
+            long phone = Long.parseLong(jTextField25.getText().trim());
+            String country = jTextField27.getText().trim();
 
-        Passenger passenger = null;
-        for (Passenger p : this.passengers) {
-            if (p.getId() == id) {
-                passenger = p;
+            ControladorDeActualizacionDePasajero controlador = new ControladorDeActualizacionDePasajero(this.passengers);
+            JSONObject respuesta = controlador.actualizarPasajero(id, firstname, lastname, fechaNacimiento, phoneCode, phone, country);
+
+            if (respuesta.getString("estado").equals("exito")) {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+
+                jTextField20.setText("");
+                jTextField22.setText("");
+                jTextField23.setText("");
+                jTextField24.setText("");
+                MONTH5.setSelectedIndex(0);
+                DAY5.setSelectedIndex(0);
+                jTextField26.setText("");
+                jTextField25.setText("");
+                jTextField27.setText("");
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-        passenger.setFirstname(firstname);
-        passenger.setLastname(lastname);
-        passenger.setBirthDate(birthDate);
-        passenger.setCountryPhoneCode(phoneCode);
-        passenger.setPhone(phone);
-        passenger.setCountry(country);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
-        // TODO add your handling code here:
-        long passengerId = Long.parseLong(jTextField28.getText());
-        String flightId = jComboBox5.getItemAt(jComboBox5.getSelectedIndex());
+        try {
+            long idPasajero = Long.parseLong(jTextField28.getText().trim());
+            String idVuelo = jComboBox5.getSelectedItem().toString();
 
-        Passenger passenger = null;
-        Flight flight = null;
+            ControladorParaAddToFlight controlador = new ControladorParaAddToFlight(this.passengers, this.flights);
+            JSONObject respuesta = controlador.agregarPasajeroAVuelo(idPasajero, idVuelo);
 
-        for (Passenger p : this.passengers) {
-            if (p.getId() == passengerId) {
-                passenger = p;
+            if (respuesta.getString("estado").equals("exito")) {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+
+                // Limpiar campo ID pasajero
+                jTextField28.setText("");
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-        for (Flight f : this.flights) {
-            if (flightId.equals(f.getId())) {
-                flight = f;
-            }
-        }
-
-        passenger.addFlight(flight);
-        flight.addPassenger(passenger);
     }//GEN-LAST:event_jButton12ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        // TODO add your handling code here:
-        String flightId = jComboBox7.getItemAt(jComboBox7.getSelectedIndex());
-        int hours = Integer.parseInt(jComboBox6.getItemAt(jComboBox6.getSelectedIndex()));
-        int minutes = Integer.parseInt(jComboBox8.getItemAt(jComboBox8.getSelectedIndex()));
+        try {
+            String idVuelo = jComboBox7.getSelectedItem().toString();
+            int horas = Integer.parseInt(jComboBox6.getSelectedItem().toString());
+            int minutos = Integer.parseInt(jComboBox8.getSelectedItem().toString());
 
-        Flight flight = null;
-        for (Flight f : this.flights) {
-            if (flightId.equals(f.getId())) {
-                flight = f;
+            ControladorParaDelayFlight controlador = new ControladorParaDelayFlight(this.flights);
+            JSONObject respuesta = controlador.retrasarVuelo(idVuelo, horas, minutos);
+
+            if (respuesta.getString("estado").equals("exito")) {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"));
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, respuesta.getString("mensaje"), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
-        flight.delay(hours, minutes);
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -1763,11 +2125,10 @@ public class AirportFrame extends javax.swing.JFrame {
     private void userSelectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userSelectActionPerformed
         try {
             String id = userSelect.getSelectedItem().toString();
-            if (! id.equals(userSelect.getItemAt(0))) {
+            if (!id.equals(userSelect.getItemAt(0))) {
                 jTextField20.setText(id);
                 jTextField28.setText(id);
-            }
-            else{
+            } else {
                 jTextField20.setText("");
                 jTextField28.setText("");
             }

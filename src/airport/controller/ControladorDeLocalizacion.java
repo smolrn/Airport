@@ -1,4 +1,3 @@
-
 package airport.controller;
 
 import airport.Location;
@@ -18,16 +17,16 @@ public class ControladorDeLocalizacion {
         JSONObject r = new JSONObject();
 
         if (id == null || !id.matches("^[A-Z]{3}$")) {
-            return error("El ID del aeropuerto debe tener exactamente 3 letras mayúsculas.");
+            return error("El ID del aeropuerto debe tener exactamente 3 letras mayusculas.");
         }
 
         if (existeId(id)) {
             return error("El ID del aeropuerto ya existe.");
         }
 
-        if (nombre == null || nombre.trim().isEmpty() ||
-            ciudad == null || ciudad.trim().isEmpty() ||
-            pais == null || pais.trim().isEmpty()) {
+        if (nombre == null || nombre.trim().isEmpty()
+                || ciudad == null || ciudad.trim().isEmpty()
+                || pais == null || pais.trim().isEmpty()) {
             return error("Los campos no pueden estar vacíos.");
         }
 
@@ -39,13 +38,12 @@ public class ControladorDeLocalizacion {
             return error("La longitud debe estar entre -180 y 180.");
         }
 
-       
         if (!tieneMax4Decimales(latitud) || !tieneMax4Decimales(longitud)) {
-            return error("La latitud y longitud deben tener máximo 4 decimales.");
+            return error("La latitud y longitud deben tener maximo 4 decimales.");
         }
 
         r.put("estado", "exito");
-        r.put("mensaje", "Localización registrada correctamente.");
+        r.put("mensaje", "Localizacion registrada correctamente.");
         return r;
     }
 
@@ -56,7 +54,9 @@ public class ControladorDeLocalizacion {
 
     private boolean existeId(String id) {
         for (Location l : localizaciones) {
-            if (l.getAirportId().equalsIgnoreCase(id)) return true;
+            if (l.getAirportId().equalsIgnoreCase(id)) {
+                return true;
+            }
         }
         return false;
     }

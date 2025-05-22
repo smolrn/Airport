@@ -1,0 +1,12 @@
+[{
+    "scaleId": "BOG",
+    "hoursDurScale": 0,
+    "minutesDurScale": 0,
+    "minutesDurArrival": 4,
+    "arrivalId": "BOG",
+    "planeId": "AB12345",
+    "id": "ABC123",
+    "departureDate": "2025-11-11T10:05",
+    "hoursDurArrival": 4,
+    "departureId": "BOG"
+}]

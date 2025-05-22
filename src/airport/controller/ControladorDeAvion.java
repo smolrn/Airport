@@ -17,25 +17,25 @@ public class ControladorDeAvion {
         JSONObject respuesta = new JSONObject();
 
         if (id == null || !id.matches("^[A-Z]{2}\\d{5}$")) {
-            return error("El ID del avión debe tener el formato XXYYYYY (2 letras + 5 dígitos).");
+            return error("El ID del avion debe tener el formato XXYYYYY (2 letras + 5 dígitos).");
         }
 
         if (existeId(id)) {
-            return error("El ID del avión ya está en uso.");
+            return error("El ID del avion ya está en uso.");
         }
 
-        if (marca == null || marca.trim().isEmpty() ||
-            modelo == null || modelo.trim().isEmpty() ||
-            aerolinea == null || aerolinea.trim().isEmpty()) {
-            return error("Ningún campo puede estar vacío.");
+        if (marca == null || marca.trim().isEmpty()
+                || modelo == null || modelo.trim().isEmpty()
+                || aerolinea == null || aerolinea.trim().isEmpty()) {
+            return error("Ningun campo puede estar vacío.");
         }
 
         if (capacidad <= 0) {
-            return error("La capacidad debe ser un número mayor que 0.");
+            return error("La capacidad debe ser un numero mayor que 0.");
         }
 
         respuesta.put("estado", "exito");
-        respuesta.put("mensaje", "Avión registrado correctamente.");
+        respuesta.put("mensaje", "Avion registrado correctamente.");
         return respuesta;
     }
 
