@@ -6,13 +6,26 @@ package airport;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author edangulo
  */
 public class Flight {
-    
+
+    private List<Observador> observadores = new ArrayList<>();
+
+    public void agregarObservador(Observador observador) {
+        observadores.add(observador);
+    }
+
+    public void notificarObservadores() {
+        for (Observador o : observadores) {
+            o.actualizar();
+        }
+    }
+
     private final String id;
     private ArrayList<Passenger> passengers;
     private Plane plane;
@@ -24,9 +37,15 @@ public class Flight {
     private int minutesDurationArrival;
     private int hoursDurationScale;
     private int minutesDurationScale;
-    
 
     public Flight(String id, Plane plane, Location departureLocation, Location arrivalLocation, LocalDateTime departureDate, int hoursDurationArrival, int minutesDurationArrival) {
+        if (departureLocation == null || arrivalLocation == null || plane == null || departureDate == null) {
+            throw new IllegalArgumentException("Datos del vuelo inválidos");
+        }
+        if (hoursDurationArrival == 0 && minutesDurationArrival == 0) {
+            throw new IllegalArgumentException("Duración inválida");
+        }
+
         this.id = id;
         this.passengers = new ArrayList<>();
         this.plane = plane;
@@ -35,11 +54,17 @@ public class Flight {
         this.departureDate = departureDate;
         this.hoursDurationArrival = hoursDurationArrival;
         this.minutesDurationArrival = minutesDurationArrival;
-        
+
         this.plane.addFlight(this);
     }
 
     public Flight(String id, Plane plane, Location departureLocation, Location scaleLocation, Location arrivalLocation, LocalDateTime departureDate, int hoursDurationArrival, int minutesDurationArrival, int hoursDurationScale, int minutesDurationScale) {
+        if (departureLocation == null || arrivalLocation == null || plane == null || departureDate == null) {
+            throw new IllegalArgumentException("Datos del vuelo inválidos");
+        }
+        if (hoursDurationArrival == 0 && minutesDurationArrival == 0) {
+            throw new IllegalArgumentException("Duración inválida");
+        }
         this.id = id;
         this.passengers = new ArrayList<>();
         this.plane = plane;
@@ -51,14 +76,15 @@ public class Flight {
         this.minutesDurationArrival = minutesDurationArrival;
         this.hoursDurationScale = hoursDurationScale;
         this.minutesDurationScale = minutesDurationScale;
-        
+
         this.plane.addFlight(this);
     }
-    
+
     public void addPassenger(Passenger passenger) {
         this.passengers.add(passenger);
+        notificarObservadores();
     }
-    
+
     public String getId() {
         return id;
     }
@@ -102,17 +128,33 @@ public class Flight {
     public void setDepartureDate(LocalDateTime departureDate) {
         this.departureDate = departureDate;
     }
-    
+
     public LocalDateTime calculateArrivalDate() {
         return departureDate.plusHours(hoursDurationScale).plusHours(hoursDurationArrival).plusMinutes(minutesDurationScale).plusMinutes(minutesDurationArrival);
     }
-    
+
     public void delay(int hours, int minutes) {
         this.departureDate = this.departureDate.plusHours(hours).plusMinutes(minutes);
+        notificarObservadores();
     }
-    
+
     public int getNumPassengers() {
         return passengers.size();
     }
-    
+
+    public Flight(Flight otro) {
+        this.id = otro.id;
+        this.passengers = new ArrayList<>(otro.passengers);
+        this.plane = otro.plane;
+        this.departureLocation = otro.departureLocation;
+        this.scaleLocation = otro.scaleLocation;
+        this.arrivalLocation = otro.arrivalLocation;
+        this.departureDate = otro.departureDate;
+        this.hoursDurationArrival = otro.hoursDurationArrival;
+        this.minutesDurationArrival = otro.minutesDurationArrival;
+        this.hoursDurationScale = otro.hoursDurationScale;
+        this.minutesDurationScale = otro.minutesDurationScale;
+    }
+
+
 }

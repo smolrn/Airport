@@ -44,6 +44,8 @@ public class ControladorDeLocalizacion {
 
         r.put("estado", "exito");
         r.put("mensaje", "Localizacion registrada correctamente.");
+        Location nueva = new Location(id, nombre, ciudad, pais, latitud, longitud);
+        localizaciones.add(nueva);
         return r;
     }
 

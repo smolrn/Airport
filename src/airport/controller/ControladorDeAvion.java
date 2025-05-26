@@ -36,6 +36,8 @@ public class ControladorDeAvion {
 
         respuesta.put("estado", "exito");
         respuesta.put("mensaje", "Avion registrado correctamente.");
+        Plane nuevo = new Plane(id, marca, modelo, capacidad, aerolinea);
+        aviones.add(nuevo);
         return respuesta;
     }
 

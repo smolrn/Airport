@@ -390,6 +390,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observador {
 
     public AirportFrame() {
         initComponents();
+
         this.planes = new ArrayList<>();
         this.locations = new ArrayList<>();
         this.passengers = new ArrayList<>();
@@ -398,14 +399,17 @@ public class AirportFrame extends javax.swing.JFrame implements Observador {
         this.cargarAvionesDesdeArchivo();
         this.cargarLocalizacionesDesdeArchivo();
         this.cargarVuelosDesdeArchivo();
-        this.cargarVuelosDesdeArchivo();
-        this.cargarAvionesDesdeArchivo();
-        this.cargarLocalizacionesDesdeArchivo();
         this.cargarPasajerosDesdeArchivo();
-        this.passengers = new ArrayList<>();
-        this.planes = new ArrayList<>();
-        this.locations = new ArrayList<>();
-        this.flights = new ArrayList<>();
+
+        for (Plane p : planes) {
+            p.agregarObservador(this);
+        }
+        for (Passenger p : passengers) {
+            p.agregarObservador(this);
+        }
+        for (Flight f : flights) {
+            f.agregarObservador(this);
+        }
 
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);

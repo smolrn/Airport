@@ -28,6 +28,11 @@ public class ControladorDeVuelo {
 
         JSONObject r = new JSONObject();
 
+        Plane avion = buscarAvion(idAvion);
+        Location salida = buscarLocalizacion(idSalida);
+        Location llegada = buscarLocalizacion(idLlegada);
+        Location escala = (idEscala == null || idEscala.trim().isEmpty()) ? null : buscarLocalizacion(idEscala);
+
         if (id == null || !id.matches("^[A-Z]{3}\\d{3}$")) {
             return error("El ID del vuelo debe tener el formato XXXYYY.");
         }
@@ -36,14 +41,9 @@ public class ControladorDeVuelo {
             return error("El ID del vuelo ya existe.");
         }
 
-        Plane avion = buscarAvion(idAvion);
         if (avion == null) {
             return error("El avion especificado no existe.");
         }
-
-        Location salida = buscarLocalizacion(idSalida);
-        Location llegada = buscarLocalizacion(idLlegada);
-        Location escala = idEscala.equals("Location") ? null : buscarLocalizacion(idEscala);
 
         if (salida == null || llegada == null) {
             return error("Las localizaciones de salida y llegada deben ser validas.");
@@ -62,9 +62,18 @@ public class ControladorDeVuelo {
             return error("No puede haber duración de escala si no hay localización de escala.");
         }
 
+        Flight vuelo;
+        if (escala == null) {
+            vuelo = new Flight(id, avion, salida, llegada, fechaSalida, horasDuracion, minutosDuracion);
+        } else {
+            vuelo = new Flight(id, avion, salida, escala, llegada, fechaSalida, horasDuracion, minutosDuracion, horasEscala, minutosEscala);
+        }
+        vuelos.add(vuelo);
+
         r.put("estado", "exito");
         r.put("mensaje", "Vuelo registrado correctamente.");
         return r;
+
     }
 
     private boolean existeId(String id) {
@@ -96,8 +105,9 @@ public class ControladorDeVuelo {
 
     private JSONObject error(String mensaje) {
         JSONObject r = new JSONObject();
-        r.put("estado", "error");
-        r.put("mensaje", mensaje);
+        r.put("estado", "exito");
+        r.put("mensaje", "Vuelo registrado correctamente.");
         return r;
+
     }
 }

@@ -12,24 +12,17 @@ import java.util.List;
  * @author edangulo
  */
 public class Plane {
-    private List<Observador> observadores = new ArrayList<>();  
 
-   
+    private List<Observador> observadores = new ArrayList<>();
+
     public void agregarObservador(Observador observador) {
         this.observadores.add(observador);
     }
 
-    
     public void notificarObservadores() {
         for (Observador observador : observadores) {
-            observador.actualizar();  
+            observador.actualizar();
         }
-    }
-
-   
-    public void agregarAvion(Plane avion) {
-       
-        this.notificarObservadores();  
     }
 
     private final String id;
@@ -40,6 +33,16 @@ public class Plane {
     private ArrayList<Flight> flights;
 
     public Plane(String id, String brand, String model, int maxCapacity, String airline) {
+        if (id == null || !id.matches("^[A-Z]{2}\\d{5}$")) {
+            throw new IllegalArgumentException("ID de avión inválido");
+        }
+        if (brand == null || brand.isBlank() || model == null || model.isBlank() || airline == null || airline.isBlank()) {
+            throw new IllegalArgumentException("Campos vacíos");
+        }
+        if (maxCapacity <= 0) {
+            throw new IllegalArgumentException("Capacidad inválida");
+        }
+
         this.id = id;
         this.brand = brand;
         this.model = model;
@@ -50,8 +53,9 @@ public class Plane {
 
     public void addFlight(Flight flight) {
         this.flights.add(flight);
+        notificarObservadores();
     }
-    
+
     public String getId() {
         return id;
     }
@@ -75,9 +79,18 @@ public class Plane {
     public ArrayList<Flight> getFlights() {
         return flights;
     }
-    
+
     public int getNumFlights() {
         return flights.size();
     }
-    
+
+    public Plane(Plane otro) {
+        this.id = otro.id;
+        this.brand = otro.brand;
+        this.model = otro.model;
+        this.maxCapacity = otro.maxCapacity;
+        this.airline = otro.airline;
+        this.flights = new ArrayList<>(otro.flights);
+    }
+
 }

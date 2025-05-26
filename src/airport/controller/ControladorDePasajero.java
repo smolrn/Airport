@@ -43,6 +43,8 @@ public class ControladorDePasajero {
 
         respuesta.put("estado", "exito");
         respuesta.put("mensaje", "Pasajero registrado correctamente.");
+        Passenger nuevo = new Passenger(id, nombre, apellido, LocalDate.parse(fechaNacimiento), codigo, telefono, pais);
+        pasajeros.add(nuevo);
         return respuesta;
     }
 

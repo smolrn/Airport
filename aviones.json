@@ -1,7 +1,37 @@
-[{
-    "maxCapacity": 180,
-    "model": "aa",
-    "id": "AB12345",
-    "airline": "avianca",
-    "brand": "aa"
-}]
+[
+    {
+        "maxCapacity": 180,
+        "model": "aa",
+        "id": "AB12345",
+        "airline": "avianca",
+        "brand": "aa"
+    },
+    {
+        "maxCapacity": 180,
+        "model": "737",
+        "id": "AV12345",
+        "airline": "LATAM",
+        "brand": "Boeing"
+    },
+    {
+        "maxCapacity": 180,
+        "model": "737",
+        "id": "AV12345",
+        "airline": "LATAM",
+        "brand": "Boeing"
+    },
+    {
+        "maxCapacity": 70,
+        "model": "456",
+        "id": "AV34598",
+        "airline": "Sobusa",
+        "brand": "Tutuc"
+    },
+    {
+        "maxCapacity": 70,
+        "model": "456",
+        "id": "AV34598",
+        "airline": "Sobusa",
+        "brand": "Tutuc"
+    }
+]
